@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Internal Server Error{% endblock %}
+{% block page_title %}Server Error Encountered{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center text-center my-5">
+    <div class="col-md-6">
+        <div class="display-1 fw-bold text-warning mb-3">500</div>
+        <h3 class="fw-bold mb-2">Unexpected Internal Error</h3>
+        <p class="text-muted mb-4">An error occurred while processing the request. This event has been intercepted and logged for administrative investigation.</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary px-4 shadow-sm">
+            <i class="fa-solid fa-house me-1"></i> Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

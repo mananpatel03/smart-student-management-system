@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Student Directory{% endblock %}
+{% block page_title %}Student Information Directory{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+        <!-- Top Toolbar & Search Form -->
+        <form method="GET" action="{{ url_for('students_list') }}" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Search by Name, ID, or Email</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="e.g. Rohan, STU2026001" value="{{ search or '' }}">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Course / Department</label>
+                <select name="course_id" class="form-select">
+                    <option value="">All Courses</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {{ 'selected' if selected_course == c.id|string }}>{{ c.code }} - {{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Semester</label>
+                <select name="semester" class="form-select">
+                    <option value="">All Semesters</option>
+                    {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}" {{ 'selected' if selected_sem == sem|string }}>Semester {{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="active" {{ 'selected' if selected_status == 'active' }}>Active</option>
+                    <option value="inactive" {{ 'selected' if selected_status == 'inactive' }}>Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter"></i></button>
+            </div>
+        </form>
+
+        <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+            <span class="text-muted small">Showing <strong>{{ students|length }}</strong> registered student records</span>
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('student_add') }}" class="btn btn-success btn-sm shadow-sm">
+                <i class="fa-solid fa-user-plus me-1"></i> Enroll New Student
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Student Table Card -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Enrollment ID</th>
+                        <th>Student Name & Email</th>
+                        <th>Course & Semester</th>
+                        <th>Phone</th>
+                        <th>Attendance Rate</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    {% set att_pct = s.calculate_attendance_percentage() %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ s.student_id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle bg-light border text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px;">
+                                    {{ s.first_name[0] }}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark">{{ s.full_name }}</div>
+                                    <small class="text-muted">{{ s.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border">{{ s.course.code }}</span>
+                            <span class="text-muted small ms-1">Sem {{ s.semester }}</span>
+                        </td>
+                        <td><small>{{ s.phone }}</small></td>
+                        <td>
+                            <span class="badge {{ 'bg-success' if att_pct >= attendance_threshold else 'bg-danger' }}">
+                                {{ att_pct }}%
+                            </span>
+                            {% if att_pct < attendance_threshold %}
+                            <small class="text-danger d-block" style="font-size: 0.7rem;"><i class="fa-solid fa-triangle-exclamation"></i> Low</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if s.status == 'active' else 'secondary' }}">
+                                {{ s.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('student_view', student_id=s.id) }}" class="btn btn-outline-primary" title="View 360 Profile">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('student_edit', student_id=s.id) }}" class="btn btn-outline-secondary" title="Edit Student">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <a href="{{ url_for('student_toggle_status', student_id=s.id) }}" 
+                                   class="btn btn-outline-{{ 'danger' if s.status == 'active' else 'success' }}" 
+                                   title="{{ 'Deactivate Student' if s.status == 'active' else 'Reactivate Student' }}"
+                                   onclick="return confirm('Change status for {{ s.full_name }}?');">
+                                    <i class="fa-solid fa-{{ 'user-slash' if s.status == 'active' else 'user-check' }}"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No student records match the filter criteria.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

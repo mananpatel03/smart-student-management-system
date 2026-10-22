@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Matrix Report{% endblock %}
+{% block page_title %}Cumulative Attendance Matrix & Analytics{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <!-- Filter Form -->
+        <form method="GET" action="{{ url_for('attendance_report') }}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Academic Course <span class="text-danger">*</span></label>
+                <select name="course_id" class="form-select" required>
+                    <option value="">-- Choose Course --</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {{ 'selected' if selected_course == c.id }}>{{ c.code }} - {{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Semester <span class="text-danger">*</span></label>
+                <select name="semester" class="form-select" required>
+                    {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}" {{ 'selected' if selected_sem == sem }}>Semester {{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                    <i class="fa-solid fa-chart-column me-1"></i> Generate Aggregate Matrix
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if report_data %}
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">
+                <i class="fa-solid fa-table-list text-primary me-2"></i> Semester {{ selected_sem }} Attendance Matrix
+            </h5>
+            <small class="text-muted">Threshold for exam eligibility: <strong>{{ attendance_threshold }}% minimum</strong></small>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-print me-1"></i> Print / Export Report
+        </button>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0 text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-start" style="min-width: 120px;">Student ID</th>
+                        <th class="text-start" style="min-width: 200px;">Student Name</th>
+                        {% for sub in subjects %}
+                        <th style="min-width: 110px;">
+                            <span class="d-block fw-bold text-dark">{{ sub.code }}</span>
+                            <small class="text-muted fw-normal" style="font-size: 0.7rem;">Att / Tot</small>
+                        </th>
+                        {% endfor %}
+                        <th style="min-width: 120px;" class="table-primary text-primary fw-bold">Aggregate %</th>
+                        <th style="min-width: 100px;">Eligibility</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                    <tr>
+                        <td class="text-start fw-bold text-dark">{{ row.student.student_id }}</td>
+                        <td class="text-start">
+                            <a href="{{ url_for('student_view', student_id=row.student.id) }}" class="text-decoration-none fw-semibold text-dark">
+                                {{ row.student.full_name }}
+                            </a>
+                        </td>
+                        {% for sub in subjects %}
+                        {% set st = row.subject_stats.get(sub.id) %}
+                        <td>
+                            {% if st and st.total > 0 %}
+                            <div>{{ st.attended }} / {{ st.total }}</div>
+                            <small class="fw-bold {{ 'text-danger' if st.pct < attendance_threshold else 'text-success' }}">
+                                {{ st.pct }}%
+                            </small>
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="table-primary fw-bold {{ 'text-danger' if row.is_defaulter else 'text-success' }}">
+                            {{ row.overall_pct }}%
+                        </td>
+                        <td>
+                            <span class="badge {{ 'bg-danger' if row.is_defaulter else 'bg-success' }}">
+                                {{ 'Defaulter' if row.is_defaulter else 'Eligible' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% elif selected_course and selected_sem %}
+<div class="alert alert-info text-center p-4 rounded-4 shadow-sm">
+    <i class="fa-solid fa-circle-info fs-3 mb-2 d-block"></i>
+    <h5>No Records Available</h5>
+    <p class="mb-0 text-muted small">No attendance sessions or student enrollments found for the selected course and semester.</p>
+</div>
+{% endif %}
+{% endblock %}

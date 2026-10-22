@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Marks Entry Sheet{% endblock %}
+{% block page_title %}Examination Marks Entry & Grading Engine{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <!-- Filter Bar -->
+        <form method="GET" action="{{ url_for('marks_entry') }}" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Examination Cycle <span class="text-danger">*</span></label>
+                <select name="exam_id" class="form-select" required>
+                    <option value="">-- Choose Exam --</option>
+                    {% for e in exams %}
+                    <option value="{{ e.id }}" {{ 'selected' if selected_exam == e.id }}>{{ e.name }} (Sem {{ e.semester }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Course / Branch <span class="text-danger">*</span></label>
+                <select name="course_id" class="form-select" required>
+                    <option value="">-- Choose Course --</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {{ 'selected' if selected_course == c.id }}>{{ c.code }} - {{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Semester <span class="text-danger">*</span></label>
+                <select name="semester" class="form-select" required>
+                    {% for sem in range(1, 9) %}
+                    <option value="{{ sem }}" {{ 'selected' if selected_sem == sem }}>Semester {{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Subject / Paper <span class="text-danger">*</span></label>
+                <select name="subject_id" class="form-select" required>
+                    <option value="">-- Choose Subject --</option>
+                    {% for sub in subjects %}
+                    <option value="{{ sub.id }}" {{ 'selected' if selected_subject == sub.id }}>
+                        {{ sub.code }} - {{ sub.name }} (Sem {{ sub.semester }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if students and subject_obj %}
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark">
+                <i class="fa-solid fa-graduation-cap text-primary me-2"></i> {{ subject_obj.code }} - {{ subject_obj.name }}
+            </h5>
+            <small class="text-muted">
+                Max Internal: <strong>{{ subject_obj.max_internal }}</strong> | 
+                Max External: <strong>{{ subject_obj.max_external }}</strong> | 
+                Passing Criteria: <strong>{{ subject_obj.pass_marks }}%</strong>
+            </small>
+        </div>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            {{ students|length }} Students Registered
+        </span>
+    </div>
+
+    <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('marks_entry', exam_id=selected_exam, course_id=selected_course, semester=selected_sem, subject_id=selected_subject) }}">
+            <input type="hidden" name="exam_id" value="{{ selected_exam }}">
+            <input type="hidden" name="subject_id" value="{{ selected_subject }}">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-4">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 15%;">Student ID</th>
+                            <th style="width: 30%;">Full Name</th>
+                            <th style="width: 15%;" class="text-center">Internal (Max {{ subject_obj.max_internal }})</th>
+                            <th style="width: 15%;" class="text-center">External (Max {{ subject_obj.max_external }})</th>
+                            <th style="width: 12%;" class="text-center">Total (Max {{ subject_obj.max_total }})</th>
+                            <th style="width: 13%;" class="text-center">Current Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        {% set existing = existing_marks.get(s.id) %}
+                        <input type="hidden" name="student_ids" value="{{ s.id }}">
+                        <tr>
+                            <td class="fw-bold text-dark">{{ s.student_id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ s.full_name }}</div>
+                                <small class="text-muted">{{ s.email }}</small>
+                            </td>
+                            <td class="text-center">
+                                <input type="number" step="0.5" min="0" max="{{ subject_obj.max_internal }}" 
+                                       name="internal_{{ s.id }}" id="int_{{ s.id }}"
+                                       class="form-control text-center mx-auto mark-input" style="max-width: 110px;"
+                                       value="{{ existing.internal_marks if existing else 0.0 }}" required>
+                            </td>
+                            <td class="text-center">
+                                <input type="number" step="0.5" min="0" max="{{ subject_obj.max_external }}" 
+                                       name="external_{{ s.id }}" id="ext_{{ s.id }}"
+                                       class="form-control text-center mx-auto mark-input" style="max-width: 110px;"
+                                       value="{{ existing.external_marks if existing else 0.0 }}" required>
+                            </td>
+                            <td class="text-center fw-bold fs-6" id="total_{{ s.id }}">
+                                {{ existing.total_marks if existing else 0.0 }}
+                            </td>
+                            <td class="text-center">
+                                {% if existing %}
+                                <span class="badge bg-{{ 'success' if existing.status == 'pass' else 'danger' }} fs-6">
+                                    {{ existing.grade }} ({{ existing.status|upper }})
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">Unsaved</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <span class="text-muted small">
+                    <i class="fa-solid fa-calculator me-1"></i> Totals, percentages, letter grades (O, A+, A, B+, B, P, F) and pass/fail are automatically computed on submission.
+                </span>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Calculate & Save All Marks
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% elif selected_exam and selected_course and selected_sem and selected_subject %}
+<div class="alert alert-warning text-center p-4 rounded-4 shadow-sm">
+    <i class="fa-solid fa-triangle-exclamation fs-3 mb-2 d-block"></i>
+    <h5>No Students Found</h5>
+    <p class="mb-0 text-muted small">No active students found in this course and semester.</p>
+</div>
+{% endif %}
+{% endblock %}

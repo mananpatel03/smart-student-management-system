@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Examinations & Evaluation{% endblock %}
+{% block page_title %}Academic Marks & Examination Center{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Card 1: Marks Entry -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4 text-center">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-3 p-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-pen-nib fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Subject-Wise Marks Entry</h5>
+            <p class="text-muted small mb-4">Input internal (max 30) and external (max 70) scores with automated total, percentage, grade, and pass/fail calculation.</p>
+            <a href="{{ url_for('marks_entry') }}" class="btn btn-primary mt-auto shadow-sm">
+                <i class="fa-solid fa-file-pen me-1"></i> Open Evaluation Sheet
+            </a>
+        </div>
+    </div>
+
+    <!-- Card 2: Student Directory for Marksheets -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4 text-center">
+            <div class="stat-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3 p-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-file-invoice fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Printable Marksheets & Transcripts</h5>
+            <p class="text-muted small mb-4">Generate and print official academic transcripts and progress report cards formatted for university submission.</p>
+            <a href="{{ url_for('students_list') }}" class="btn btn-success mt-auto shadow-sm">
+                <i class="fa-solid fa-users me-1"></i> Browse Students for Report Cards
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

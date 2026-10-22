@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Student Record' if is_edit else 'Enroll New Student' }}{% endblock %}
+{% block page_title %}{{ 'Edit Student Record' if is_edit else 'Student Enrollment Form' }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="fa-solid {{ 'fa-user-pen text-primary' if is_edit else 'fa-user-plus text-success' }} me-2"></i>
+                        {{ 'Modify Student Information' if is_edit else 'Enrollment & Academic Admission' }}
+                    </h5>
+                    <p class="text-muted small mb-0">Fill in accurate demographic and academic enrollment information.</p>
+                </div>
+                <a href="{{ url_for('students_list') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Directory
+                </a>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form method="POST" action="{{ url_for('student_edit', student_id=student.id) if is_edit else url_for('student_add') }}">
+                    <!-- Section: Academic Enrollment -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">1. Academic & Identification Details</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Student Enrollment ID <span class="text-danger">*</span></label>
+                            <input type="text" name="student_id" class="form-control" placeholder="e.g. STU2026010" 
+                                   value="{{ student.student_id if is_edit else form_data.get('student_id', '') }}" 
+                                   {{ 'readonly disabled' if is_edit else 'required' }}>
+                            {% if is_edit %}
+                            <small class="text-muted" style="font-size: 0.75rem;">Enrollment ID cannot be modified.</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">Academic Course / Branch <span class="text-danger">*</span></label>
+                            <select name="course_id" class="form-select" required>
+                                <option value="">-- Choose Course --</option>
+                                {% for c in courses %}
+                                <option value="{{ c.id }}" {{ 'selected' if (is_edit and student.course_id == c.id) or (not is_edit and form_data.get('course_id') == c.id|string) }}>
+                                    {{ c.code }} - {{ c.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Current Semester <span class="text-danger">*</span></label>
+                            <select name="semester" class="form-select" required>
+                                {% for sem in range(1, 9) %}
+                                <option value="{{ sem }}" {{ 'selected' if (is_edit and student.semester == sem) or (not is_edit and form_data.get('semester') == sem|string) }}>
+                                    Semester {{ sem }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Section: Student Identity -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">2. Student Personal Information</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" class="form-control" placeholder="e.g. Rohan" 
+                                   value="{{ student.first_name if is_edit else form_data.get('first_name', '') }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" class="form-control" placeholder="e.g. Mehta" 
+                                   value="{{ student.last_name if is_edit else form_data.get('last_name', '') }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Official Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" placeholder="e.g. rohan.mehta@student.aite.in" 
+                                   value="{{ student.email if is_edit else form_data.get('email', '') }}" 
+                                   {{ 'readonly disabled' if is_edit else 'required' }}>
+                            {% if not is_edit %}
+                            <small class="text-muted" style="font-size: 0.75rem;">A portal login account will be automatically generated with this email.</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Contact Phone (10 Digits) <span class="text-danger">*</span></label>
+                            <input type="tel" name="phone" class="form-control" pattern="[0-9]{10}" placeholder="9820112233" 
+                                   value="{{ student.phone if is_edit else form_data.get('phone', '') }}" required>
+                        </div>
+                    </div>
+
+                    <!-- Section: Guardian & Residential Information -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">3. Guardian & Residential Details</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Parent / Guardian Name</label>
+                            <input type="text" name="guardian_name" class="form-control" placeholder="e.g. Sanjay Mehta" 
+                                   value="{{ student.guardian_name if is_edit else form_data.get('guardian_name', '') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Guardian Phone Number</label>
+                            <input type="tel" name="guardian_phone" class="form-control" placeholder="9820199887" 
+                                   value="{{ student.guardian_phone if is_edit else form_data.get('guardian_phone', '') }}">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Permanent Residential Address</label>
+                            <textarea name="address" class="form-control" rows="2" placeholder="Street, Building, City, Pincode">{{ student.address if is_edit else form_data.get('address', '') }}</textarea>
+                        </div>
+
+                        {% if is_edit %}
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Enrollment Status</label>
+                            <select name="status" class="form-select">
+                                <option value="active" {{ 'selected' if student.status == 'active' }}>Active</option>
+                                <option value="inactive" {{ 'selected' if student.status == 'inactive' }}>Inactive</option>
+                                <option value="graduated" {{ 'selected' if student.status == 'graduated' }}>Graduated</option>
+                                <option value="dropped" {{ 'selected' if student.status == 'dropped' }}>Dropped</option>
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                        <a href="{{ url_for('students_list') }}" class="btn btn-light px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> {{ 'Save Changes' if is_edit else 'Complete Admission & Enroll' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

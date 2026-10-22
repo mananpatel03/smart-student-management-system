@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Fee Ledger & Accounts{% endblock %}
+{% block page_title %}Fee Management & Accounts Ledger{% endblock %}
+
+{% block content %}
+<!-- Metrics Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">Total Revenue Collected</span>
+                    <h3 class="fw-bold text-success mt-1 mb-0">₹{{ "{:,.2f}".format(total_collected) }}</h3>
+                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success rounded-3 p-3">
+                    <i class="fa-solid fa-circle-check fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted text-uppercase small fw-semibold">Total Outstanding Receivables</span>
+                    <h3 class="fw-bold text-danger mt-1 mb-0">₹{{ "{:,.2f}".format(total_pending) }}</h3>
+                </div>
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                    <i class="fa-solid fa-clock fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ url_for('fees_list') }}" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Filter by Academic Course</label>
+                <select name="course_id" class="form-select">
+                    <option value="">All Courses</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {{ 'selected' if selected_course == c.id }}>{{ c.code }} - {{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Ledger Balance Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="unpaid" {{ 'selected' if selected_status == 'unpaid' }}>Unpaid (100% Due)</option>
+                    <option value="partial" {{ 'selected' if selected_status == 'partial' }}>Partial (Installment Paid)</option>
+                    <option value="paid" {{ 'selected' if selected_status == 'paid' }}>Fully Paid (Zero Dues)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100 shadow-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Fee Ledger Table -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="fa-solid fa-book-open text-primary me-2"></i> Student Fee Ledger Entries ({{ fees|length }})
+        </h5>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Enrollment ID</th>
+                        <th>Student Name</th>
+                        <th>Course & Sem</th>
+                        <th>Total Course Fee</th>
+                        <th>Amount Paid</th>
+                        <th>Outstanding Balance</th>
+                        <th>Ledger Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in fees %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ f.student.student_id }}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ f.student.full_name }}</div>
+                            <small class="text-muted">{{ f.student.email }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ f.student.course.code }}</span>
+                            <span class="text-muted small ms-1">Sem {{ f.student.semester }}</span>
+                        </td>
+                        <td>₹{{ "{:,.2f}".format(f.total_amount) }}</td>
+                        <td class="text-success fw-bold">₹{{ "{:,.2f}".format(f.paid_amount) }}</td>
+                        <td class="text-danger fw-bold">₹{{ "{:,.2f}".format(f.balance_amount) }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if f.status == 'paid' else ('warning text-dark' if f.status == 'partial' else 'danger') }}">
+                                {{ f.status|upper }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            {% if f.balance_amount > 0 %}
+                            <a href="{{ url_for('fee_collect', student_fee_id=f.id) }}" class="btn btn-sm btn-success shadow-sm">
+                                <i class="fa-solid fa-hand-holding-dollar me-1"></i> Collect Fee
+                            </a>
+                            {% else %}
+                            <span class="badge bg-success-subtle text-success border border-success py-2 px-3">
+                                <i class="fa-solid fa-check-circle me-1"></i> Paid in Full
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No student fee records found matching filter.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

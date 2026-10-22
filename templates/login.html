@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In{% endblock %}
+{% block page_title %}Institutional Access Gateway{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center my-4">
+    <div class="col-md-9 col-lg-7 col-xl-6">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white text-center p-4">
+                <div class="display-6 mb-2">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h4 class="fw-bold mb-1">Smart Student Management System</h4>
+                <p class="mb-0 text-white-50 small">{{ institute_name }} ({{ institute_code }})</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <h5 class="fw-semibold text-dark mb-3">Sign in to your account</h5>
+                <p class="text-muted small mb-4">Select your authorized institutional credentials to access your dashboard.</p>
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-medium small">Username or Institutional ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="e.g. admin or sharma_prof" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-medium small">Secure Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i> Authenticate & Proceed
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Quick Test Credentials Box -->
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-bold text-dark small"><i class="fa-solid fa-bolt text-warning me-1"></i> Quick Demo Access (1-Click Fill)</span>
+                        <span class="badge bg-secondary">Evaluator Mode</span>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6 col-sm-3">
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100 quick-fill-btn" data-user="admin" data-pass="admin123">
+                                <i class="fa-solid fa-user-shield d-block mb-1"></i> Admin
+                            </button>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <button type="button" class="btn btn-outline-info btn-sm w-100 quick-fill-btn" data-user="sharma_prof" data-pass="teacher123">
+                                <i class="fa-solid fa-chalkboard-user d-block mb-1"></i> Teacher
+                            </button>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100 quick-fill-btn" data-user="accountant" data-pass="account123">
+                                <i class="fa-solid fa-calculator d-block mb-1"></i> Accounts
+                            </button>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <button type="button" class="btn btn-outline-success btn-sm w-100 quick-fill-btn" data-user="rohan_mehta" data-pass="student123">
+                                <i class="fa-solid fa-user-graduate d-block mb-1"></i> Student
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-light p-3 text-center text-muted small">
+                <i class="fa-solid fa-lock text-success me-1"></i> Secured with SHA-256 salted password hashing & session guards.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.quick-fill-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        document.getElementById('username').value = this.getAttribute('data-user');
+        document.getElementById('password').value = this.getAttribute('data-pass');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Hub{% endblock %}
+{% block page_title %}Attendance Management Gateway{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Card 1: Mark Daily Attendance -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4 text-center">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-3 p-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-clipboard-user fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Mark Lecture Attendance</h5>
+            <p class="text-muted small mb-4">Take daily roll call for any course, semester, and subject with one-click multi-student selection.</p>
+            <a href="{{ url_for('attendance_mark') }}" class="btn btn-primary mt-auto shadow-sm">
+                <i class="fa-solid fa-check me-1"></i> Open Attendance Register
+            </a>
+        </div>
+    </div>
+
+    <!-- Card 2: Attendance Analytics & Reports -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4 text-center">
+            <div class="stat-icon bg-success bg-opacity-10 text-success rounded-circle mx-auto mb-3 p-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-chart-simple fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Attendance Matrix Report</h5>
+            <p class="text-muted small mb-4">Generate semester-wide attendance matrices, subject percentages, and export roll reports.</p>
+            <a href="{{ url_for('attendance_report') }}" class="btn btn-success mt-auto shadow-sm">
+                <i class="fa-solid fa-table me-1"></i> View Aggregate Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Card 3: Defaulters List -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 p-4 text-center">
+            <div class="stat-icon bg-danger bg-opacity-10 text-danger rounded-circle mx-auto mb-3 p-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-user-xmark fs-3"></i>
+            </div>
+            <h5 class="fw-bold mb-2">Defaulters List (&lt;75%)</h5>
+            <p class="text-muted small mb-4">View students failing to meet mandatory attendance thresholds for exam debarment notifications.</p>
+            <a href="{{ url_for('attendance_defaulters') }}" class="btn btn-danger mt-auto shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> View Low Attendance List
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
