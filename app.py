@@ -91,23 +91,34 @@ def create_app():
             return redirect(url_for('dashboard'))
 
         if request.method == 'POST':
-            username = request.form.get('username', '').strip()
+            login_input = request.form.get('username', '').strip()
             password = request.form.get('password', '')
 
-            user = User.query.filter_by(username=username).first()
+            # 1. Search User by username or email (case-insensitive)
+            user = User.query.filter(
+                (User.username.ilike(login_input)) |
+                (User.email.ilike(login_input))
+            ).first()
+
+            # 2. If not found by username or email, check if login_input is a Student ID (e.g. STU2026001)
+            if not user:
+                student = Student.query.filter(Student.student_id.ilike(login_input)).first()
+                if student and student.user_account:
+                    user = student.user_account
+
             if user and user.is_active and user.check_password(password):
                 session['user_id'] = user.id
                 session['username'] = user.username
                 session['role'] = user.role
                 session['full_name'] = user.full_name
 
-                log_audit('USER_LOGIN', 'User', user.id, f"User {user.username} logged in successfully.")
+                log_audit('USER_LOGIN', 'User', user.id, f"User {user.username} ({user.role}) logged in successfully.")
                 flash(f"Welcome back, {user.full_name}!", 'success')
 
                 next_page = request.args.get('next')
                 return redirect(next_page or url_for('dashboard'))
             else:
-                flash('Invalid username, password, or account inactive.', 'danger')
+                flash('Invalid Username / Student ID / Email, incorrect password, or account inactive.', 'danger')
 
         return render_template('login.html')
 
@@ -273,6 +284,10 @@ def create_app():
             guardian_name = request.form.get('guardian_name', '').strip()
             guardian_phone = request.form.get('guardian_phone', '').strip()
             address = request.form.get('address', '').strip()
+            
+            # Custom username and password from form
+            custom_username = request.form.get('username', '').strip()
+            custom_password = request.form.get('password', '').strip() or 'student123'
 
             # Validations
             if Student.query.filter_by(student_id=student_id).first():
@@ -284,9 +299,15 @@ def create_app():
                 return render_template('students/form.html', courses=courses, form_data=request.form)
 
             # Create User Account for the student
-            username = email.split('@')[0].replace('.', '_')
-            if User.query.filter_by(username=username).first():
-                username = f"{username}_{student_id.lower()}"
+            if custom_username:
+                if User.query.filter_by(username=custom_username).first():
+                    flash(f"Error: Username '{custom_username}' is already taken! Choose another.", 'danger')
+                    return render_template('students/form.html', courses=courses, form_data=request.form)
+                username = custom_username
+            else:
+                username = email.split('@')[0].replace('.', '_')
+                if User.query.filter_by(username=username).first():
+                    username = f"{username}_{student_id.lower()}"
 
             user = User(
                 username=username,
@@ -294,7 +315,7 @@ def create_app():
                 email=email,
                 full_name=f"{first_name} {last_name}"
             )
-            user.set_password('student123')
+            user.set_password(custom_password)
             db.session.add(user)
             db.session.flush()
 
@@ -332,7 +353,7 @@ def create_app():
 
             db.session.commit()
             log_audit('STUDENT_CREATED', 'Student', student.id, f"Added student {student.student_id} ({student.full_name}) with login '{username}'")
-            flash(f"Student {first_name} {last_name} enrolled successfully! Default password is 'student123'.", 'success')
+            flash(f"Student {first_name} {last_name} enrolled successfully! Login Username: '{username}' | Password: '{custom_password}' (can also log in with Student ID '{student_id}').", 'success')
             return redirect(url_for('students_list'))
 
         return render_template('students/form.html', courses=courses, form_data={}, is_edit=False)
@@ -355,13 +376,18 @@ def create_app():
             student.address = request.form.get('address', '').strip()
             student.status = request.form.get('status', 'active')
 
+            new_password = request.form.get('password', '').strip()
+
             if student.user_account:
                 student.user_account.full_name = student.full_name
                 student.user_account.is_active = (student.status == 'active')
+                if new_password:
+                    student.user_account.set_password(new_password)
+                    log_audit('PASSWORD_CHANGED', 'User', student.user_account.id, f"Admin updated password for student {student.student_id}")
 
             db.session.commit()
             log_audit('STUDENT_UPDATED', 'Student', student.id, f"Updated profile for student {student.student_id}")
-            flash('Student profile updated successfully.', 'success')
+            flash('Student profile updated successfully.' + (' New password saved.' if new_password else ''), 'success')
             return redirect(url_for('student_view', student_id=student.id))
 
         return render_template('students/form.html', courses=courses, student=student, is_edit=True)
@@ -791,8 +817,65 @@ def create_app():
         )
 
     # ---------------------------------------------------------
-    # Module 6: Security & Audit Logs
+    # Module 6: Security, Users & Password Management (Admin)
     # ---------------------------------------------------------
+    @app.route('/admin/users')
+    @login_required
+    @roles_accepted('admin')
+    def admin_users():
+        role_filter = request.args.get('role')
+        search = request.args.get('search', '').strip()
+
+        query = User.query
+        if role_filter:
+            query = query.filter_by(role=role_filter)
+        if search:
+            query = query.filter(
+                (User.username.ilike(f"%{search}%")) |
+                (User.full_name.ilike(f"%{search}%")) |
+                (User.email.ilike(f"%{search}%"))
+            )
+
+        users = query.order_by(User.role.asc(), User.id.asc()).all()
+        return render_template('admin/users.html', users=users, selected_role=role_filter, search=search)
+
+    @app.route('/admin/users/reset-password/<int:user_id>', methods=['POST'])
+    @login_required
+    @roles_accepted('admin')
+    def admin_reset_password(user_id):
+        user = User.query.get_or_404(user_id)
+        new_password = request.form.get('new_password', '').strip()
+
+        if not new_password or len(new_password) < 4:
+            flash('Password must be at least 4 characters long.', 'danger')
+            return redirect(request.referrer or url_for('admin_users'))
+
+        user.set_password(new_password)
+        db.session.commit()
+
+        log_audit('ADMIN_RESET_PASSWORD', 'User', user.id, f"Admin '{session.get('username')}' reset password for user '{user.username}' ({user.role}).")
+        flash(f"Password for user '{user.username}' ({user.full_name}) has been reset successfully to '{new_password}'!", 'success')
+        return redirect(request.referrer or url_for('admin_users'))
+
+    @app.route('/admin/users/toggle-active/<int:user_id>')
+    @login_required
+    @roles_accepted('admin')
+    def admin_toggle_user_active(user_id):
+        user = User.query.get_or_404(user_id)
+        if user.id == session.get('user_id'):
+            flash('You cannot deactivate your own admin account.', 'danger')
+            return redirect(request.referrer or url_for('admin_users'))
+
+        user.is_active = not user.is_active
+        if user.student_profile:
+            user.student_profile.status = 'active' if user.is_active else 'inactive'
+
+        db.session.commit()
+        status_str = 'activated' if user.is_active else 'deactivated'
+        log_audit('USER_STATUS_TOGGLED', 'User', user.id, f"Admin '{session.get('username')}' {status_str} account for '{user.username}'")
+        flash(f"User account '{user.username}' has been {status_str}.", 'info')
+        return redirect(request.referrer or url_for('admin_users'))
+
     @app.route('/audit-logs')
     @login_required
     @roles_accepted('admin')

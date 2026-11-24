@@ -120,6 +120,17 @@
                                 <a href="{{ url_for('student_edit', student_id=s.id) }}" class="btn btn-outline-secondary" title="Edit Student">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
+                                {% if s.user_account %}
+                                <button type="button" class="btn btn-outline-warning btn-student-pass" 
+                                        data-bs-toggle="modal" data-bs-target="#studentPasswordModal"
+                                        data-user-id="{{ s.user_account.id }}"
+                                        data-student-name="{{ s.full_name }}"
+                                        data-student-id="{{ s.student_id }}"
+                                        data-username="{{ s.user_account.username }}"
+                                        title="Change/Reset Student Password">
+                                    <i class="fa-solid fa-key"></i>
+                                </button>
+                                {% endif %}
                                 <a href="{{ url_for('student_toggle_status', student_id=s.id) }}" 
                                    class="btn btn-outline-{{ 'danger' if s.status == 'active' else 'success' }}" 
                                    title="{{ 'Deactivate Student' if s.status == 'active' else 'Reactivate Student' }}"
@@ -140,4 +151,109 @@
         </div>
     </div>
 </div>
+
+{% if current_user.role == 'admin' %}
+<!-- Student Reset Password Modal -->
+<div class="modal fade" id="studentPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-warning text-dark p-4">
+                <div>
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-key me-2"></i> Change Student Password
+                    </h5>
+                    <small class="text-dark-50">Set a new portal password for this student account.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="studentPassForm" method="POST" action="">
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <small class="text-muted d-block">Student Details:</small>
+                        <strong class="fs-6 text-dark" id="modalStuName">Student Name</strong>
+                        <div class="small text-muted">
+                            Enrollment ID: <strong class="text-primary" id="modalStuId">STU2026001</strong> | 
+                            Username: <strong class="text-dark font-monospace" id="modalStuUsername">username</strong>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="new_student_pass_input" class="form-label small fw-semibold">New Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                            <input type="password" class="form-control form-control-lg" id="new_student_pass_input" name="new_password" 
+                                   placeholder="Minimum 4 characters" minlength="4" required autofocus>
+                            <button class="btn btn-outline-secondary" type="button" id="btnToggleStuPass">
+                                <i class="fa-solid fa-eye" id="iconToggleStuPass"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">The student can log in using this new password immediately.</small>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-2 border-top">
+                        <small class="text-muted fw-semibold">Quick Presets:</small>
+                        <button type="button" class="btn btn-light btn-sm border" onclick="setStuPresetPass('student123')">student123</button>
+                        <button type="button" class="btn btn-light btn-sm border" onclick="setStuPresetPass('password123')">password123</button>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modalForm = document.getElementById('studentPassForm');
+    const nameEl = document.getElementById('modalStuName');
+    const idEl = document.getElementById('modalStuId');
+    const userEl = document.getElementById('modalStuUsername');
+    const passInput = document.getElementById('new_student_pass_input');
+    const toggleBtn = document.getElementById('btnToggleStuPass');
+    const toggleIcon = document.getElementById('iconToggleStuPass');
+
+    document.querySelectorAll('.btn-student-pass').forEach(button => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-user-id');
+            const studentName = this.getAttribute('data-student-name');
+            const studentId = this.getAttribute('data-student-id');
+            const username = this.getAttribute('data-username');
+
+            modalForm.action = `/admin/users/reset-password/${userId}`;
+            nameEl.textContent = studentName;
+            idEl.textContent = studentId;
+            userEl.textContent = `@${username}`;
+            passInput.value = '';
+            passInput.focus();
+        });
+    });
+
+    toggleBtn?.addEventListener('click', function () {
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passInput.type = 'password';
+            toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
+});
+
+function setStuPresetPass(val) {
+    const inp = document.getElementById('new_student_pass_input');
+    inp.value = val;
+    inp.type = 'text';
+    document.getElementById('iconToggleStuPass').classList.replace('fa-eye', 'fa-eye-slash');
+}
+</script>
 {% endblock %}

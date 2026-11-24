@@ -16,15 +16,16 @@
             </div>
 
             <div class="card-body p-4 p-md-5">
-                <h5 class="fw-semibold text-dark mb-3">Sign in to your account</h5>
-                <p class="text-muted small mb-4">Select your authorized institutional credentials to access your dashboard.</p>
+                <h5 class="fw-semibold text-dark mb-1">Sign in to your account</h5>
+                <p class="text-muted small mb-4">Students can sign in using their <strong>Student ID (e.g. STU2026001)</strong>, Username, or Email.</p>
 
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-3">
-                        <label for="username" class="form-label fw-medium small">Username or Institutional ID</label>
+                        <label for="username" class="form-label fw-medium small">Username, Student ID, or Email</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="e.g. admin or sharma_prof" required autofocus>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="e.g. STU2026001 or rohan_mehta or admin" required autofocus>
                         </div>
                     </div>
 
@@ -50,7 +51,7 @@
                         <span class="badge bg-secondary">Evaluator Mode</span>
                     </div>
 
-                    <div class="row g-2">
+                    <div class="row g-2 mb-2">
                         <div class="col-6 col-sm-3">
                             <button type="button" class="btn btn-outline-danger btn-sm w-100 quick-fill-btn" data-user="admin" data-pass="admin123">
                                 <i class="fa-solid fa-user-shield d-block mb-1"></i> Admin
@@ -67,8 +68,27 @@
                             </button>
                         </div>
                         <div class="col-6 col-sm-3">
-                            <button type="button" class="btn btn-outline-success btn-sm w-100 quick-fill-btn" data-user="rohan_mehta" data-pass="student123">
-                                <i class="fa-solid fa-user-graduate d-block mb-1"></i> Student
+                            <button type="button" class="btn btn-outline-success btn-sm w-100 quick-fill-btn" data-user="STU2026001" data-pass="student123">
+                                <i class="fa-solid fa-user-graduate d-block mb-1"></i> Student 1
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Other Students Quick Fill -->
+                    <div class="p-2 bg-light rounded border">
+                        <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.72rem;">Try Other Students (Click to fill):</small>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="btn btn-light btn-sm border py-0 px-2 quick-fill-btn" data-user="STU2026002" data-pass="student123" style="font-size: 0.75rem;">
+                                Ananya (STU2026002)
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm border py-0 px-2 quick-fill-btn text-danger fw-semibold" data-user="STU2026003" data-pass="student123" style="font-size: 0.75rem;">
+                                Vikram (STU2026003 - At-Risk)
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm border py-0 px-2 quick-fill-btn" data-user="STU2026004" data-pass="student123" style="font-size: 0.75rem;">
+                                Sneha (STU2026004)
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm border py-0 px-2 quick-fill-btn" data-user="STU2026005" data-pass="student123" style="font-size: 0.75rem;">
+                                Aarav (STU2026005)
                             </button>
                         </div>
                     </div>

@@ -38,7 +38,7 @@
                 </div>
                 <div class="overflow-hidden">
                     <div class="text-truncate fw-semibold text-white small">{{ current_user.full_name }}</div>
-                    <span class="badge bg-{{ 'danger' if current_user.role == 'admin' else ('info' if current_user.role == 'teacher' else ('warning' if current_user.role == 'accountant' else 'success')) }} text-uppercase" style="font-size: 0.65rem;">
+                    <span class="badge bg-{{ 'danger' if current_user.role == 'admin' else ('info' if current_user.role == 'teacher' else ('warning text-dark' if current_user.role == 'accountant' else 'success')) }} text-uppercase" style="font-size: 0.65rem;">
                         {{ current_user.role }}
                     </span>
                 </div>
@@ -90,6 +90,11 @@
 
                 {% if current_user.role == 'admin' %}
                 <li class="nav-item mt-2 pt-2 border-top border-secondary">
+                    <a class="nav-link text-white-50 rounded {{ 'active' if 'admin_users' in request.endpoint }}" href="{{ url_for('admin_users') }}">
+                        <i class="fa-solid fa-users-gear me-2"></i> User & Password Manager
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link text-white-50 rounded {{ 'active' if request.endpoint == 'audit_logs' }}" href="{{ url_for('audit_logs') }}">
                         <i class="fa-solid fa-shield-halved me-2"></i> Security & Audit
                     </a>

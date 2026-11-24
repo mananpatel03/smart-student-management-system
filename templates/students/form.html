@@ -13,7 +13,7 @@
                         <i class="fa-solid {{ 'fa-user-pen text-primary' if is_edit else 'fa-user-plus text-success' }} me-2"></i>
                         {{ 'Modify Student Information' if is_edit else 'Enrollment & Academic Admission' }}
                     </h5>
-                    <p class="text-muted small mb-0">Fill in accurate demographic and academic enrollment information.</p>
+                    <p class="text-muted small mb-0">Fill in accurate demographic, academic, and portal login information.</p>
                 </div>
                 <a href="{{ url_for('students_list') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="fa-solid fa-arrow-left me-1"></i> Back to Directory
@@ -22,7 +22,7 @@
 
             <div class="card-body p-4 p-md-5">
                 <form method="POST" action="{{ url_for('student_edit', student_id=student.id) if is_edit else url_for('student_add') }}">
-                    <!-- Section: Academic Enrollment -->
+                    <!-- Section 1: Academic Enrollment -->
                     <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">1. Academic & Identification Details</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
@@ -59,7 +59,7 @@
                         </div>
                     </div>
 
-                    <!-- Section: Student Identity -->
+                    <!-- Section 2: Student Identity -->
                     <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">2. Student Personal Information</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
@@ -80,7 +80,7 @@
                                    value="{{ student.email if is_edit else form_data.get('email', '') }}" 
                                    {{ 'readonly disabled' if is_edit else 'required' }}>
                             {% if not is_edit %}
-                            <small class="text-muted" style="font-size: 0.75rem;">A portal login account will be automatically generated with this email.</small>
+                            <small class="text-muted" style="font-size: 0.75rem;">Can also be used by the student to log in.</small>
                             {% endif %}
                         </div>
 
@@ -91,8 +91,42 @@
                         </div>
                     </div>
 
-                    <!-- Section: Guardian & Residential Information -->
-                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">3. Guardian & Residential Details</h6>
+                    <!-- Section 3: Student Portal Login Credentials & Password Option -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                        <i class="fa-solid fa-key text-warning me-1"></i> 3. Student Portal Account & Password Settings
+                    </h6>
+                    <div class="row g-3 mb-4 bg-light p-3 rounded-3 border">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Portal Login Username</label>
+                            <input type="text" name="username" class="form-control" 
+                                   placeholder="{{ student.user_account.username if is_edit and student.user_account else 'Leave empty to auto-generate from email' }}"
+                                   value="{{ student.user_account.username if is_edit and student.user_account else form_data.get('username', '') }}"
+                                   {{ 'readonly' if is_edit else '' }}>
+                            <small class="text-muted" style="font-size: 0.75rem;">
+                                {{ 'Username is fixed.' if is_edit else 'Optional custom username. (Student can also log in using their Student ID or Email).' }}
+                            </small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">
+                                {{ 'Change Account Password' if is_edit else 'Set Initial Password' }}
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fa-solid fa-lock text-muted"></i></span>
+                                <input type="password" id="student_pass_input" name="password" class="form-control" 
+                                       placeholder="{{ 'Leave blank to keep existing password' if is_edit else 'e.g. MySecret@123 (Default: student123)' }}">
+                                <button class="btn btn-outline-secondary bg-white" type="button" id="btnToggleStudentPass">
+                                    <i class="fa-solid fa-eye" id="iconToggleStudentPass"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted" style="font-size: 0.75rem;">
+                                {{ 'Leave blank if you do not want to change the password.' if is_edit else 'Default is student123 if left blank. Can be changed anytime by Admin.' }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Guardian & Residential Information -->
+                    <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">4. Guardian & Residential Details</h6>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">Parent / Guardian Name</label>
@@ -135,4 +169,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btnToggleStudentPass')?.addEventListener('click', function () {
+    const passInp = document.getElementById('student_pass_input');
+    const icon = document.getElementById('iconToggleStudentPass');
+    if (passInp.type === 'password') {
+        passInp.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        passInp.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+});
+</script>
 {% endblock %}

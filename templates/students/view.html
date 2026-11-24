@@ -35,6 +35,11 @@
                 <a href="{{ url_for('student_edit', student_id=student.id) }}" class="btn btn-outline-primary btn-sm">
                     <i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile
                 </a>
+                {% if student.user_account %}
+                <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#viewResetPassModal">
+                    <i class="fa-solid fa-key me-1"></i> Reset Password
+                </button>
+                {% endif %}
                 {% endif %}
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-none d-md-inline-block">
                     <i class="fa-solid fa-print me-1"></i> Print Profile
@@ -353,4 +358,54 @@
         </div>
     </div>
 </div>
+
+{% if current_user.role == 'admin' and student.user_account %}
+<!-- Reset Password Modal for Student View -->
+<div class="modal fade" id="viewResetPassModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-warning text-dark p-4">
+                <div>
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-key me-2"></i> Reset Student Password
+                    </h5>
+                    <small class="text-dark-50">Update the login password for {{ student.full_name }}.</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="/admin/users/reset-password/{{ student.user_account.id }}">
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <small class="text-muted d-block">Student Portal Account:</small>
+                        <strong class="fs-6 text-dark">{{ student.full_name }}</strong>
+                        <div class="small text-muted">
+                            ID: <strong class="text-primary">{{ student.student_id }}</strong> | 
+                            Username: <strong class="text-dark font-monospace">{{ student.user_account.username }}</strong>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Enter New Password <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa-solid fa-lock text-muted"></i></span>
+                            <input type="password" id="modal_view_pass_input" name="new_password" class="form-control form-control-lg" placeholder="Minimum 4 characters" minlength="4" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="
+                                const p = document.getElementById('modal_view_pass_input');
+                                p.type = (p.type === 'password') ? 'text' : 'password';
+                            ">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-3">
+                    <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Save New Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
